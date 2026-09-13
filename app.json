@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.gonurse.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -25,6 +26,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-maps",
       [
         "expo-splash-screen",
         {
@@ -37,6 +39,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "08260686-0317-4ada-b4e3-d34419ccf62e"
+      }
     }
   }
 }

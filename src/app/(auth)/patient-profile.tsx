@@ -1,11 +1,19 @@
 import { router } from "expo-router";
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
+import { useState } from "react";
+
+import {
+  getCurrentLocation,
+  requestLocationPermission,
+} from "@/services/location";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function PatientProfileScreen() {
@@ -13,10 +21,42 @@ export default function PatientProfileScreen() {
     (state) => state.setPatientProfile,
   );
 
-  const handleContinue = () => {
-    setPatientProfile({});
+  const [loading, setLoading] = useState(false);
 
-    router.replace("/(patient)/home");
+  const handleContinue = async () => {
+    try {
+      setLoading(true);
+
+      const permission =
+        await requestLocationPermission();
+
+      if (!permission) {
+        Alert.alert(
+          "Location Required",
+          "GoNurse needs your location to find nurses near you.",
+        );
+
+        return;
+      }
+
+      const location = await getCurrentLocation();
+
+      setPatientProfile({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+
+      router.replace("/(patient)/home");
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        "Location Error",
+        "We couldn't get your current location. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,35 +64,46 @@ export default function PatientProfileScreen() {
       <Text style={styles.logo}>GoNurse</Text>
 
       <Text style={styles.title}>
-        Let's get you started
+        Find nurses near you
       </Text>
 
       <Text style={styles.subtitle}>
-        GoNurse uses your location to find nurses near you.
+        GoNurse uses your location to find trusted nurses
+        within a 20 km radius.
       </Text>
 
       <View style={styles.locationCard}>
-        <Text style={styles.icon}>📍</Text>
+        <View style={styles.iconContainer}>
+          <Text style={styles.icon}>📍</Text>
+        </View>
 
         <View style={styles.locationContent}>
           <Text style={styles.locationTitle}>
-            Location access
+            Your location
           </Text>
 
           <Text style={styles.locationDescription}>
-            Your location will be used to find nurses within
-            20 km of you.
+            Your location is only used to find nurses
+            nearby.
           </Text>
         </View>
       </View>
 
       <TouchableOpacity
-        style={styles.button}
+        style={[
+          styles.button,
+          loading && styles.buttonDisabled,
+        ]}
         onPress={handleContinue}
+        disabled={loading}
       >
-        <Text style={styles.buttonText}>
-          Continue
-        </Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>
+            Allow Location
+          </Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -94,8 +145,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
 
+  iconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   icon: {
-    fontSize: 28,
+    fontSize: 26,
   },
 
   locationContent: {
@@ -122,6 +182,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 32,
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttonText: {
