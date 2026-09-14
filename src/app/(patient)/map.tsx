@@ -1,5 +1,6 @@
 import MapView, {
   Marker,
+  PROVIDER_GOOGLE,
 } from "react-native-maps";
 
 import {
@@ -67,12 +68,13 @@ export default function MapScreen() {
     <View style={styles.container}>
       {/* MAP */}
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={{
-          latitude,
-          longitude,
-          latitudeDelta: 0.15,
-          longitudeDelta: 0.15,
+          latitude: latitude,
+          longitude: longitude,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
         }}
       >
         {nearbyNurses.map((nurse) => (

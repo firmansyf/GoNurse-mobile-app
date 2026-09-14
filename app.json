@@ -26,7 +26,12 @@
     },
     "plugins": [
       "expo-router",
-      "react-native-maps",
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyAEjpczG-TdvdJSQCU34-wlJjiec3lExR0"
+        }
+      ],
       [
         "expo-splash-screen",
         {
