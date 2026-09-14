@@ -15,8 +15,8 @@ import { router } from "expo-router";
 
 import { APP_CONFIG } from "@/constants/config";
 import { dummyNurses } from "@/features/nurse/data";
+import { getNearbyNurses } from "@/features/nurse/utils";
 import { useAuthStore } from "@/store/auth-store";
-import { calculateDistance } from "@/utils/distance";
 
 import { NurseCard } from "@/components/NurseCard";
 
@@ -35,26 +35,26 @@ export default function MapScreen() {
 
   console.log("DUMMY NURSES:", dummyNurses);
 
+  // Location belum tersedia
   if (latitude == null || longitude == null) {
     return (
       <View style={styles.center}>
-        <Text>
+        <Text style={styles.locationError}>
           Location is not available.
         </Text>
       </View>
     );
   }
 
- const nearbyNurses = dummyNurses.map((nurse) => ({
-  ...nurse,
-  distance: calculateDistance(
+  // Get nurses within configured radius
+  const nearbyNurses = getNearbyNurses(
+    dummyNurses,
     latitude,
     longitude,
-    nurse.latitude,
-    nurse.longitude,
-  ),
-}));
+    APP_CONFIG.maxNurseRadiusKm,
+  );
 
+  // Navigate to nurse profile
   const handleNursePress = (nurseId: string) => {
     router.push({
       pathname: "/(patient)/nurse/[id]",
@@ -66,13 +66,15 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      {/* MAP */}
+      {/* =========================
+          MAP
+      ========================= */}
       <MapView
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={{
-          latitude: latitude,
-          longitude: longitude,
+          latitude,
+          longitude,
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         }}
@@ -88,7 +90,7 @@ export default function MapScreen() {
             description={`${nurse.distance.toFixed(
               1,
             )} km • ⭐ ${nurse.rating}`}
-            onCalloutPress={() =>
+            onPress={() =>
               handleNursePress(nurse.id)
             }
           >
@@ -101,9 +103,11 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* TOP CARD */}
+      {/* =========================
+          TOP CARD
+      ========================= */}
       <View style={styles.topCard}>
-        <View>
+        <View style={styles.topCardContent}>
           <Text style={styles.title}>
             Nurses near you
           </Text>
@@ -117,15 +121,22 @@ export default function MapScreen() {
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => router.back()}
+          activeOpacity={0.7}
         >
-          <Text style={styles.closeText}>✕</Text>
+          <Text style={styles.closeText}>
+            ✕
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* NURSE LIST */}
+      {/* =========================
+          NURSE LIST / BOTTOM SHEET
+      ========================= */}
       <View style={styles.bottomSheet}>
+        {/* Drag Handle */}
         <View style={styles.handle} />
 
+        {/* Header */}
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>
             Available Nurses
@@ -136,6 +147,7 @@ export default function MapScreen() {
           </Text>
         </View>
 
+        {/* List */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={
@@ -153,8 +165,8 @@ export default function MapScreen() {
               </Text>
 
               <Text style={styles.emptyText}>
-                We couldn't find any verified nurses
-                within{" "}
+                We couldn't find any verified
+                nurses within{" "}
                 {APP_CONFIG.maxNurseRadiusKm} km.
               </Text>
             </View>
@@ -176,6 +188,10 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  // =========================
+  // CONTAINER
+  // =========================
+
   container: {
     flex: 1,
   },
@@ -188,7 +204,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 24,
   },
+
+  locationError: {
+    fontSize: 16,
+    color: "#666",
+  },
+
+  // =========================
+  // TOP CARD
+  // =========================
 
   topCard: {
     position: "absolute",
@@ -196,8 +222,10 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     padding: 16,
+
     borderRadius: 16,
     backgroundColor: "#fff",
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -210,6 +238,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 5,
+  },
+
+  topCardContent: {
+    flex: 1,
   },
 
   title: {
@@ -228,6 +260,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: "#f2f2f2",
+
     alignItems: "center",
     justifyContent: "center",
   },
@@ -237,28 +270,52 @@ const styles = StyleSheet.create({
     color: "#555",
   },
 
+  // =========================
+  // MARKER
+  // =========================
+
   marker: {
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: "#fff",
+
     alignItems: "center",
     justifyContent: "center",
+
     borderWidth: 2,
     borderColor: "#111",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+
+    elevation: 4,
   },
 
   markerIcon: {
     fontSize: 22,
   },
 
+  // =========================
+  // BOTTOM SHEET
+  // =========================
+
   bottomSheet: {
     position: "absolute",
+
     left: 0,
     right: 0,
     bottom: 0,
+
     height: "48%",
+
     backgroundColor: "#fff",
+
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
 
@@ -281,9 +338,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  // =========================
+  // LIST HEADER
+  // =========================
+
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
+
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 10,
@@ -300,10 +362,18 @@ const styles = StyleSheet.create({
     color: "#666",
   },
 
+  // =========================
+  // LIST
+  // =========================
+
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
+
+  // =========================
+  // EMPTY STATE
+  // =========================
 
   empty: {
     alignItems: "center",
