@@ -17,7 +17,9 @@ import {
 import { useAuthStore } from "@/store/auth-store";
 
 export default function LoginScreen() {
-  const login = useAuthStore((state) => state.login);
+  const login = useAuthStore(
+    (state) => state.login,
+  );
 
   const {
     control,
@@ -34,12 +36,49 @@ export default function LoginScreen() {
   const onSubmit = (data: LoginForm) => {
     console.log("Login data:", data);
 
-    // Temporary authentication.
-    // Will be replaced with API later.
+    const email = data.email
+      .trim()
+      .toLowerCase();
+
+    /**
+     * ============================================
+     * TEMPORARY DEVELOPMENT LOGIN
+     * ============================================
+     *
+     * Patient:
+     * patient@gonurse.com
+     *
+     * Nurse:
+     * nurse@gonurse.com
+     *
+     * Password:
+     * bebas untuk sekarang
+     *
+     * Nanti bagian ini akan diganti
+     * dengan authentication dari backend.
+     */
+
+    if (email === "nurse@gonurse.com") {
+      console.log("🔵 Login as NURSE");
+
+      login({
+        id: "nurse-001",
+        name: "Siti Rahma",
+        email: email,
+        role: "nurse",
+      });
+
+      router.replace("/(nurse)/dashboard");
+
+      return;
+    }
+
+    console.log("🟢 Login as PATIENT");
+
     login({
-      id: "user-001",
+      id: "patient-001",
       name: "Yusuf",
-      email: data.email,
+      email: email,
       role: "patient",
     });
 
@@ -53,21 +92,33 @@ export default function LoginScreen() {
           onPress={() => router.back()}
           style={styles.back}
         >
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>
+            ← Back
+          </Text>
         </TouchableOpacity>
 
-        <Text style={styles.logo}>GoNurse</Text>
+        <Text style={styles.logo}>
+          GoNurse
+        </Text>
 
-        <Text style={styles.title}>Welcome back 👋</Text>
+        <Text style={styles.title}>
+          Welcome back 👋
+        </Text>
 
         <Text style={styles.subtitle}>
-          Login to find a trusted nurse near you.
+          Login to find a trusted nurse near
+          you.
         </Text>
 
         <Controller
           control={control}
           name="email"
-          render={({ field: { onChange, value } }) => (
+          render={({
+            field: {
+              onChange,
+              value,
+            },
+          }) => (
             <Input
               label="Email"
               placeholder="you@example.com"
@@ -75,7 +126,9 @@ export default function LoginScreen() {
               onChangeText={onChange}
               keyboardType="email-address"
               autoCapitalize="none"
-              error={errors.email?.message}
+              error={
+                errors.email?.message
+              }
             />
           )}
         />
@@ -83,19 +136,28 @@ export default function LoginScreen() {
         <Controller
           control={control}
           name="password"
-          render={({ field: { onChange, value } }) => (
+          render={({
+            field: {
+              onChange,
+              value,
+            },
+          }) => (
             <Input
               label="Password"
               placeholder="Enter your password"
               value={value}
               onChangeText={onChange}
               secureTextEntry
-              error={errors.password?.message}
+              error={
+                errors.password?.message
+              }
             />
           )}
         />
 
-        <TouchableOpacity style={styles.forgot}>
+        <TouchableOpacity
+          style={styles.forgot}
+        >
           <Text style={styles.forgotText}>
             Forgot password?
           </Text>
@@ -103,15 +165,23 @@ export default function LoginScreen() {
 
         <Button
           title="Login"
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmit(
+            onSubmit,
+          )}
         />
       </View>
 
       <View style={styles.bottom}>
-        <Text>Don't have an account? </Text>
+        <Text>
+          Don't have an account?{" "}
+        </Text>
 
         <TouchableOpacity
-          onPress={() => router.push("/(auth)/register")}
+          onPress={() =>
+            router.push(
+              "/(auth)/register",
+            )
+          }
         >
           <Text style={styles.register}>
             Create account
@@ -127,7 +197,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingTop: 60,
-    justifyContent: "space-between",
+    justifyContent:
+      "space-between",
   },
 
   back: {

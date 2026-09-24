@@ -50,25 +50,15 @@ export const useBookingStore =
     createBooking: (input) => {
       const booking: Booking = {
         id: `booking-${Date.now()}`,
-
         nurseId: input.nurseId,
-
         patientId: input.patientId,
-
         nurse: input.nurse,
-
         service: input.service,
-
         date: input.date,
-
         time: input.time,
-
         address: input.address,
-
         notes: input.notes,
-
         status: "pending",
-
         createdAt: new Date().toISOString(),
       };
 
