@@ -7,6 +7,8 @@ import {
 
 import { router } from "expo-router";
 
+import { COLORS } from "@/constants/colors";
+
 export default function NurseDashboardScreen() {
   const handleOpenBookings = () => {
     router.push("/(nurse)/bookings");
@@ -14,24 +16,45 @@ export default function NurseDashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Hello, Nurse 👋
-      </Text>
+      {/* Header */}
+      <View>
+        <Text style={styles.greeting}>
+          Hello, Nurse 👋
+        </Text>
 
-      <Text style={styles.subtitle}>
-        Welcome to your GoNurse dashboard.
-      </Text>
-
-      <View style={styles.status}>
-        <Text>🟢 Available</Text>
+        <Text style={styles.subtitle}>
+          Welcome to your GoNurse dashboard.
+        </Text>
       </View>
 
+      {/* Availability */}
+      <View style={styles.statusCard}>
+        <View style={styles.statusIndicator} />
+
+        <View style={styles.statusContent}>
+          <Text style={styles.statusTitle}>
+            You're available
+          </Text>
+
+          <Text style={styles.statusSubtitle}>
+            Patients can send you booking requests.
+          </Text>
+        </View>
+      </View>
+
+      {/* Booking */}
       <TouchableOpacity
-        style={styles.bookingButton}
+        style={styles.bookingCard}
         onPress={handleOpenBookings}
         activeOpacity={0.8}
       >
-        <View>
+        <View style={styles.bookingIcon}>
+          <Text style={styles.bookingIconText}>
+            📋
+          </Text>
+        </View>
+
+        <View style={styles.bookingContent}>
           <Text style={styles.bookingTitle}>
             My Bookings
           </Text>
@@ -53,51 +76,103 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    paddingTop: 80,
+    paddingTop: 70,
+    backgroundColor: COLORS.background,
   },
 
-  title: {
+  greeting: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   subtitle: {
-    fontSize: 18,
     marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.textSecondary,
   },
 
-  status: {
+  statusCard: {
     marginTop: 32,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-
-  bookingButton: {
-    marginTop: 24,
     padding: 18,
-    borderRadius: 16,
-    backgroundColor: "#111",
+    borderRadius: 18,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+  },
+
+  statusIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+  },
+
+  statusContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  statusTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+
+  statusSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textSecondary,
+  },
+
+  bookingCard: {
+    marginTop: 16,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  bookingIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  bookingIconText: {
+    fontSize: 24,
+  },
+
+  bookingContent: {
+    flex: 1,
+    marginLeft: 14,
   },
 
   bookingTitle: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   bookingSubtitle: {
-    color: "#ccc",
-    fontSize: 13,
     marginTop: 4,
+    fontSize: 13,
+    color: COLORS.textSecondary,
   },
 
   arrow: {
-    color: "#fff",
+    marginLeft: 10,
     fontSize: 24,
+    color: COLORS.primary,
   },
 });

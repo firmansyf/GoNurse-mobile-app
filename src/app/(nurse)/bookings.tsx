@@ -1,14 +1,15 @@
+import { router } from "expo-router";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-import { router } from "expo-router";
-
+import { COLORS } from "@/constants/colors";
 import { useBookingStore } from "@/store/booking-store";
+import type { Booking } from "@/types/booking";
 
 export default function NurseBookingsScreen() {
   const bookings = useBookingStore(
@@ -21,9 +22,9 @@ export default function NurseBookingsScreen() {
     );
 
   /**
-   * Temporary nurse ID
+   * Temporary nurse ID.
    *
-   * Nanti akan diambil dari:
+   * Later:
    * auth store / logged-in nurse
    */
   const nurseId = "nurse-001";
@@ -52,44 +53,98 @@ export default function NurseBookingsScreen() {
         booking.status === "completed",
     );
 
-console.log("ALL BOOKINGS:", bookings);
-console.log("NURSE BOOKINGS:", nurseBookings);
-console.log("PENDING BOOKINGS:", pendingBookings);
-
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* ==================================================
+          HEADER
+      ================================================== */}
+
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>
-            My Bookings
-          </Text>
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.eyebrow}>
+              NURSE DASHBOARD
+            </Text>
 
-          <Text style={styles.subtitle}>
-            Manage your nursing requests
-          </Text>
+            <Text style={styles.title}>
+              My Bookings
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Manage your nursing appointments
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.refreshButton}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.refreshIcon}>
+              ↻
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.refreshButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.refreshText}>
-            ↻
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={
-          styles.content
-        }
+        contentContainerStyle={styles.content}
       >
-        {/* Pending */}
+        {/* ==================================================
+            SUMMARY
+        ================================================== */}
+
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryIntro}>
+            <View style={styles.summaryIconContainer}>
+              <Text style={styles.summaryIcon}>
+                🩺
+              </Text>
+            </View>
+
+            <View style={styles.summaryText}>
+              <Text style={styles.summaryTitle}>
+                Today's Overview
+              </Text>
+
+              <Text style={styles.summarySubtitle}>
+                Keep track of your patient requests
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <StatItem
+              value={pendingBookings.length}
+              label="New"
+              highlight
+            />
+
+            <View style={styles.statDivider} />
+
+            <StatItem
+              value={activeBookings.length}
+              label="Active"
+            />
+
+            <View style={styles.statDivider} />
+
+            <StatItem
+              value={completedBookings.length}
+              label="Done"
+            />
+          </View>
+        </View>
+
+        {/* ==================================================
+            NEW REQUESTS
+        ================================================== */}
+
         <Section
           title="New Requests"
+          subtitle="Booking requests waiting for your response"
           count={pendingBookings.length}
+          highlighted
         >
           {pendingBookings.length === 0 ? (
             <EmptyState
@@ -98,21 +153,23 @@ console.log("PENDING BOOKINGS:", pendingBookings);
               description="New booking requests will appear here."
             />
           ) : (
-            pendingBookings.map(
-              (booking) => (
-                <BookingCard
-                  key={booking.id}
-                  booking={booking}
-                  type="pending"
-                />
-              ),
-            )
+            pendingBookings.map((booking) => (
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                type="pending"
+              />
+            ))
           )}
         </Section>
 
-        {/* Active */}
+        {/* ==================================================
+            ACTIVE BOOKINGS
+        ================================================== */}
+
         <Section
           title="Active Bookings"
+          subtitle="Patients currently in your care"
           count={activeBookings.length}
         >
           {activeBookings.length === 0 ? (
@@ -122,21 +179,23 @@ console.log("PENDING BOOKINGS:", pendingBookings);
               description="Accepted bookings will appear here."
             />
           ) : (
-            activeBookings.map(
-              (booking) => (
-                <BookingCard
-                  key={booking.id}
-                  booking={booking}
-                  type="active"
-                />
-              ),
-            )
+            activeBookings.map((booking) => (
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                type="active"
+              />
+            ))
           )}
         </Section>
 
-        {/* Completed */}
+        {/* ==================================================
+            COMPLETED
+        ================================================== */}
+
         <Section
           title="Completed"
+          subtitle="Your completed nursing services"
           count={completedBookings.length}
         >
           {completedBookings.length === 0 ? (
@@ -146,46 +205,111 @@ console.log("PENDING BOOKINGS:", pendingBookings);
               description="Completed services will appear here."
             />
           ) : (
-            completedBookings.map(
-              (booking) => (
-                <BookingCard
-                  key={booking.id}
-                  booking={booking}
-                  type="completed"
-                />
-              ),
-            )
+            completedBookings.map((booking) => (
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                type="completed"
+              />
+            ))
           )}
         </Section>
+
+        <View style={styles.bottomSpace} />
       </ScrollView>
     </View>
   );
 }
 
-/* =====================================================
+/* ============================================================
+   STAT ITEM
+============================================================ */
+
+function StatItem({
+  value,
+  label,
+  highlight = false,
+}: {
+  value: number;
+  label: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={styles.statItem}>
+      <Text
+        style={[
+          styles.statValue,
+          highlight && styles.statValueHighlight,
+        ]}
+      >
+        {value}
+      </Text>
+
+      <Text style={styles.statLabel}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+/* ============================================================
    SECTION
-===================================================== */
+============================================================ */
 
 function Section({
   title,
+  subtitle,
   count,
+  highlighted = false,
   children,
 }: {
   title: string;
+  subtitle: string;
   count: number;
+  highlighted?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          {title}
-        </Text>
+        <View style={styles.sectionTitleContainer}>
+          <View
+            style={[
+              styles.sectionIndicator,
+              highlighted &&
+                styles.sectionIndicatorHighlight,
+            ]}
+          />
 
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>
-            {count}
-          </Text>
+          <View style={styles.sectionTextContainer}>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>
+                {title}
+              </Text>
+
+              <View
+                style={[
+                  styles.countBadge,
+                  highlighted &&
+                    styles.countBadgeHighlight,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.countText,
+                    highlighted &&
+                      styles.countTextHighlight,
+                  ]}
+                >
+                  {count}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.sectionSubtitle}>
+              {subtitle}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -194,15 +318,15 @@ function Section({
   );
 }
 
-/* =====================================================
+/* ============================================================
    BOOKING CARD
-===================================================== */
+============================================================ */
 
 function BookingCard({
   booking,
   type,
 }: {
-  booking: any;
+  booking: Booking;
   type:
     | "pending"
     | "active"
@@ -246,13 +370,28 @@ function BookingCard({
   };
 
   return (
-    <View style={styles.card}>
-      {/* Patient */}
+    <View
+      style={[
+        styles.card,
+        type === "pending" &&
+          styles.pendingCard,
+      ]}
+    >
+      {/* ==================================================
+          CARD HEADER
+      ================================================== */}
+
       <View style={styles.patientRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            👤
-          </Text>
+        <View style={styles.avatarWrapper}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              👤
+            </Text>
+          </View>
+
+          {type === "pending" && (
+            <View style={styles.newDot} />
+          )}
         </View>
 
         <View style={styles.patientInfo}>
@@ -270,63 +409,51 @@ function BookingCard({
         />
       </View>
 
-      {/* Service */}
-      <View style={styles.infoRow}>
-        <Text style={styles.infoIcon}>
-          🩺
-        </Text>
+      {/* ==================================================
+          SERVICE
+      ================================================== */}
 
-        <View style={styles.infoContent}>
-          <Text style={styles.infoLabel}>
-            Service
-          </Text>
+      <InfoRow
+        icon="🩺"
+        label="SERVICE"
+        value={booking.service}
+      />
 
-          <Text style={styles.infoValue}>
-            {booking.service}
-          </Text>
-        </View>
-      </View>
+      {/* ==================================================
+          SCHEDULE
+      ================================================== */}
 
-      {/* Schedule */}
-      <View style={styles.infoRow}>
-        <Text style={styles.infoIcon}>
-          📅
-        </Text>
+      <InfoRow
+        icon="📅"
+        label="SCHEDULE"
+        value={`${booking.date} • ${booking.time}`}
+      />
 
-        <View style={styles.infoContent}>
-          <Text style={styles.infoLabel}>
-            Schedule
-          </Text>
+      {/* ==================================================
+          LOCATION
+      ================================================== */}
 
-          <Text style={styles.infoValue}>
-            {booking.date} • {booking.time}
-          </Text>
-        </View>
-      </View>
+      <InfoRow
+        icon="📍"
+        label="LOCATION"
+        value={booking.address}
+      />
 
-      {/* Address */}
-      <View style={styles.infoRow}>
-        <Text style={styles.infoIcon}>
-          📍
-        </Text>
+      {/* ==================================================
+          NOTES
+      ================================================== */}
 
-        <View style={styles.infoContent}>
-          <Text style={styles.infoLabel}>
-            Location
-          </Text>
-
-          <Text style={styles.infoValue}>
-            {booking.address}
-          </Text>
-        </View>
-      </View>
-
-      {/* Notes */}
       {booking.notes ? (
         <View style={styles.notes}>
-          <Text style={styles.notesLabel}>
-            Patient Notes
-          </Text>
+          <View style={styles.notesHeader}>
+            <Text style={styles.notesIcon}>
+              📝
+            </Text>
+
+            <Text style={styles.notesLabel}>
+              PATIENT NOTES
+            </Text>
+          </View>
 
           <Text style={styles.notesText}>
             {booking.notes}
@@ -334,7 +461,10 @@ function BookingCard({
         </View>
       ) : null}
 
-      {/* Actions */}
+      {/* ==================================================
+          ACTIONS
+      ================================================== */}
+
       {type === "pending" && (
         <View style={styles.actions}>
           <TouchableOpacity
@@ -342,9 +472,11 @@ function BookingCard({
             onPress={handleReject}
             activeOpacity={0.8}
           >
-            <Text
-              style={styles.rejectText}
-            >
+            <Text style={styles.rejectIcon}>
+              ×
+            </Text>
+
+            <Text style={styles.rejectText}>
               Reject
             </Text>
           </TouchableOpacity>
@@ -354,9 +486,11 @@ function BookingCard({
             onPress={handleAccept}
             activeOpacity={0.8}
           >
-            <Text
-              style={styles.acceptText}
-            >
+            <Text style={styles.acceptIcon}>
+              ✓
+            </Text>
+
+            <Text style={styles.acceptText}>
               Accept
             </Text>
           </TouchableOpacity>
@@ -370,10 +504,12 @@ function BookingCard({
             onPress={handleOpen}
             activeOpacity={0.8}
           >
-            <Text
-              style={styles.detailText}
-            >
+            <Text style={styles.detailText}>
               View Detail
+            </Text>
+
+            <Text style={styles.detailArrow}>
+              →
             </Text>
           </TouchableOpacity>
 
@@ -384,9 +520,11 @@ function BookingCard({
               onPress={handleStartTrip}
               activeOpacity={0.8}
             >
-              <Text
-                style={styles.acceptText}
-              >
+              <Text style={styles.acceptIcon}>
+                🚗
+              </Text>
+
+              <Text style={styles.acceptText}>
                 Start Trip
               </Text>
             </TouchableOpacity>
@@ -396,12 +534,16 @@ function BookingCard({
 
       {type === "completed" && (
         <TouchableOpacity
-          style={styles.detailButton}
+          style={styles.completedDetailButton}
           onPress={handleOpen}
           activeOpacity={0.8}
         >
           <Text style={styles.detailText}>
-            View Detail
+            View Booking Detail
+          </Text>
+
+          <Text style={styles.detailArrow}>
+            →
           </Text>
         </TouchableOpacity>
       )}
@@ -409,42 +551,116 @@ function BookingCard({
   );
 }
 
-/* =====================================================
+/* ============================================================
+   INFO ROW
+============================================================ */
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoIconContainer}>
+        <Text style={styles.infoIcon}>
+          {icon}
+        </Text>
+      </View>
+
+      <View style={styles.infoContent}>
+        <Text style={styles.infoLabel}>
+          {label}
+        </Text>
+
+        <Text
+          style={styles.infoValue}
+          numberOfLines={2}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/* ============================================================
    STATUS BADGE
-===================================================== */
+============================================================ */
 
 function StatusBadge({
   status,
 }: {
   status: string;
 }) {
-  const label =
+  const config =
     status === "pending"
-      ? "Pending"
+      ? {
+          label: "Pending",
+          icon: "⏳",
+          style: styles.statusPending,
+        }
       : status === "accepted"
-        ? "Accepted"
+        ? {
+            label: "Accepted",
+            icon: "✓",
+            style: styles.statusAccepted,
+          }
         : status === "on_the_way"
-          ? "On The Way"
+          ? {
+              label: "On the Way",
+              icon: "🚗",
+              style: styles.statusInfo,
+            }
           : status === "arrived"
-            ? "Arrived"
+            ? {
+                label: "Arrived",
+                icon: "📍",
+                style: styles.statusInfo,
+              }
             : status === "in_progress"
-              ? "In Progress"
+              ? {
+                  label: "In Progress",
+                  icon: "🩺",
+                  style: styles.statusInfo,
+                }
               : status === "completed"
-                ? "Completed"
-                : status;
+                ? {
+                    label: "Completed",
+                    icon: "✓",
+                    style: styles.statusCompleted,
+                  }
+                : {
+                    label: status,
+                    icon: "•",
+                    style: styles.statusDefault,
+                  };
 
   return (
-    <View style={styles.statusBadge}>
+    <View
+      style={[
+        styles.statusBadge,
+        config.style,
+      ]}
+    >
+      <Text style={styles.statusIcon}>
+        {config.icon}
+      </Text>
+
       <Text style={styles.statusText}>
-        {label}
+        {config.label}
       </Text>
     </View>
   );
 }
 
-/* =====================================================
+/* ============================================================
    EMPTY STATE
-===================================================== */
+============================================================ */
 
 function EmptyState({
   icon,
@@ -457,9 +673,13 @@ function EmptyState({
 }) {
   return (
     <View style={styles.empty}>
-      <Text style={styles.emptyIcon}>
-        {icon}
-      </Text>
+      <View style={styles.emptyIconOuter}>
+        <View style={styles.emptyIconContainer}>
+          <Text style={styles.emptyIcon}>
+            {icon}
+          </Text>
+        </View>
+      </View>
 
       <Text style={styles.emptyTitle}>
         {title}
@@ -472,106 +692,286 @@ function EmptyState({
   );
 }
 
-/* =====================================================
+/* ============================================================
    STYLES
-===================================================== */
+============================================================ */
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: COLORS.background,
   },
 
+  /* Header */
+
   header: {
+    backgroundColor: COLORS.surface,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 56,
     paddingBottom: 20,
-    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+
+  headerContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
 
+  eyebrow: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: COLORS.primary,
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
+
   title: {
     fontSize: 26,
     fontWeight: "800",
+    color: COLORS.text,
   },
 
   subtitle: {
     marginTop: 4,
-    color: "#777",
-    fontSize: 14,
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
 
   refreshButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
-    backgroundColor: "#F2F2F2",
+    borderRadius: 14,
+    backgroundColor: COLORS.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  refreshText: {
-    fontSize: 24,
-    color: "#555",
+  refreshIcon: {
+    fontSize: 25,
+    color: COLORS.primaryDark,
   },
 
+  /* Content */
+
   content: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
     paddingBottom: 40,
   },
+
+  /* Summary */
+
+  summaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    padding: 17,
+    marginBottom: 26,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  summaryIntro: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  summaryIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  summaryIcon: {
+    fontSize: 22,
+  },
+
+  summaryText: {
+    flex: 1,
+    marginLeft: 11,
+  },
+
+  summaryTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  summarySubtitle: {
+    marginTop: 3,
+    fontSize: 10,
+    color: COLORS.textSecondary,
+  },
+
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 18,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  statValue: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  statValueHighlight: {
+    color: COLORS.primary,
+  },
+
+  statLabel: {
+    marginTop: 2,
+    fontSize: 10,
+    color: COLORS.textMuted,
+    fontWeight: "600",
+  },
+
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: COLORS.border,
+  },
+
+  /* Section */
 
   section: {
     marginBottom: 28,
   },
 
   sectionHeader: {
+    marginBottom: 12,
+  },
+
+  sectionTitleContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+
+  sectionIndicator: {
+    width: 4,
+    height: 36,
+    borderRadius: 2,
+    backgroundColor: COLORS.border,
+    marginRight: 10,
+  },
+
+  sectionIndicatorHighlight: {
+    backgroundColor: COLORS.primary,
+  },
+
+  sectionTextContainer: {
+    flex: 1,
+  },
+
+  sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
   },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  sectionSubtitle: {
+    marginTop: 3,
+    fontSize: 10,
+    lineHeight: 15,
+    color: COLORS.textMuted,
   },
 
   countBadge: {
+    minWidth: 25,
+    height: 25,
+    borderRadius: 13,
+    paddingHorizontal: 7,
     marginLeft: 8,
-    minWidth: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#EDEDED",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 7,
+  },
+
+  countBadgeHighlight: {
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primaryLight,
   },
 
   countText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#555",
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.textSecondary,
   },
 
+  countTextHighlight: {
+    color: COLORS.primaryDark,
+  },
+
+  /* Card */
+
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.surface,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.03,
+    shadowRadius: 7,
+    elevation: 2,
   },
+
+  pendingCard: {
+    borderColor: COLORS.primaryLight,
+    borderWidth: 1.5,
+  },
+
+  /* Patient */
 
   patientRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 17,
+  },
+
+  avatarWrapper: {
+    position: "relative",
   },
 
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F2F2F2",
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: COLORS.primaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -580,153 +980,298 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
 
+  newDot: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.surface,
+  },
+
   patientInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 11,
   },
 
   patientName: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   bookingId: {
     marginTop: 3,
-    fontSize: 12,
-    color: "#888",
+    fontSize: 10,
+    color: COLORS.textMuted,
   },
 
+  /* Status */
+
   statusBadge: {
-    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 9,
     paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: "#F2F2F2",
+    borderRadius: 9,
+  },
+
+  statusPending: {
+    backgroundColor: "#FFFBEB",
+  },
+
+  statusAccepted: {
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  statusInfo: {
+    backgroundColor: "#EFF6FF",
+  },
+
+  statusCompleted: {
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  statusDefault: {
+    backgroundColor: COLORS.background,
+  },
+
+  statusIcon: {
+    fontSize: 9,
+    marginRight: 4,
   },
 
   statusText: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 9,
+    fontWeight: "800",
+    color: COLORS.text,
   },
+
+  /* Info */
 
   infoRow: {
     flexDirection: "row",
-    marginBottom: 13,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  infoIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   infoIcon: {
-    width: 28,
-    fontSize: 18,
+    fontSize: 16,
   },
 
   infoContent: {
     flex: 1,
+    marginLeft: 10,
   },
 
   infoLabel: {
-    fontSize: 11,
-    color: "#999",
+    fontSize: 8,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    letterSpacing: 0.6,
+    marginBottom: 3,
   },
 
   infoValue: {
-    marginTop: 2,
-    fontSize: 14,
+    fontSize: 12,
+    lineHeight: 18,
     fontWeight: "600",
-    color: "#333",
+    color: COLORS.text,
   },
 
+  /* Notes */
+
   notes: {
-    marginTop: 4,
+    marginTop: 2,
+    marginBottom: 2,
     padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#F7F7F7",
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+  },
+
+  notesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+
+  notesIcon: {
+    fontSize: 13,
+    marginRight: 5,
   },
 
   notesLabel: {
-    fontSize: 11,
-    color: "#999",
-    marginBottom: 4,
+    fontSize: 8,
+    fontWeight: "800",
+    color: COLORS.primaryDark,
+    letterSpacing: 0.5,
   },
 
   notesText: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: "#444",
+    fontSize: 11,
+    lineHeight: 17,
+    color: COLORS.text,
   },
+
+  /* Actions */
 
   actions: {
     flexDirection: "row",
-    gap: 10,
+    gap: 9,
     marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
 
   rejectButton: {
     flex: 1,
     height: 46,
-    borderRadius: 12,
+    borderRadius: 13,
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "#DDD",
+    borderColor: "#FECACA",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
 
+  rejectIcon: {
+    fontSize: 19,
+    color: COLORS.danger,
+    marginRight: 5,
+  },
+
   rejectText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#555",
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.danger,
   },
 
   acceptButton: {
     flex: 1,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: "#111",
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  acceptIcon: {
+    fontSize: 12,
+    color: COLORS.white,
+    marginRight: 6,
   },
 
   acceptText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.white,
   },
 
   detailButton: {
+    flex: 1,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: "#F1F1F1",
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
   },
 
   detailText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#333",
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.primaryDark,
   },
 
-  empty: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 28,
+  detailArrow: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.primary,
+    marginLeft: 6,
+  },
+
+  completedDetailButton: {
+    height: 46,
+    marginTop: 15,
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* Empty */
+
+  empty: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  emptyIconOuter: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyIconContainer: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   emptyIcon: {
-    fontSize: 32,
+    fontSize: 25,
   },
 
   emptyTitle: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: "700",
+    marginTop: 13,
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   emptyDescription: {
+    maxWidth: 280,
     marginTop: 5,
     textAlign: "center",
-    color: "#888",
-    fontSize: 13,
-    lineHeight: 19,
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    lineHeight: 17,
+  },
+
+  bottomSpace: {
+    height: 20,
   },
 });

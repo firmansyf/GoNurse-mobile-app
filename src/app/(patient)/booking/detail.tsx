@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
+import { COLORS } from "@/constants/colors";
 import { useBookingStore } from "@/store/booking-store";
 
 export default function BookingDetailScreen() {
@@ -25,7 +26,9 @@ export default function BookingDetailScreen() {
   if (!booking) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorIcon}>📋</Text>
+        <View style={styles.errorIconContainer}>
+          <Text style={styles.errorIcon}>📋</Text>
+        </View>
 
         <Text style={styles.errorTitle}>
           Booking Not Found
@@ -40,7 +43,7 @@ export default function BookingDetailScreen() {
           onPress={() =>
             router.replace("/(patient)/bookings")
           }
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           <Text style={styles.backHomeText}>
             Back to My Bookings
@@ -127,21 +130,72 @@ export default function BookingDetailScreen() {
     );
   };
 
+  const getStatusTheme = () => {
+    switch (booking.status) {
+      case "accepted":
+      case "completed":
+        return {
+          background: COLORS.primarySoft,
+          iconBackground: COLORS.primaryLight,
+          icon: "✓",
+          iconColor: COLORS.primaryDark,
+        };
+
+      case "rejected":
+      case "cancelled":
+        return {
+          background: "#FEF2F2",
+          iconBackground: "#FEE2E2",
+          icon: "!",
+          iconColor: COLORS.danger,
+        };
+
+      case "on_the_way":
+      case "arrived":
+      case "in_progress":
+        return {
+          background: "#EFF6FF",
+          iconBackground: "#DBEAFE",
+          icon: "→",
+          iconColor: COLORS?.info,
+        };
+
+      default:
+        return {
+          background: "#FFFBEB",
+          iconBackground: "#FEF3C7",
+          icon: "⏳",
+          iconColor: COLORS.warning,
+        };
+    }
+  };
+
+  const statusTheme = getStatusTheme();
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* =========================
+          Header
+      ========================= */}
+
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
           <Text style={styles.backText}>‹</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          Booking Detail
-        </Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>
+            Booking Detail
+          </Text>
+
+          <Text style={styles.headerSubtitle}>
+            #{booking.id}
+          </Text>
+        </View>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -150,28 +204,46 @@ export default function BookingDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* Status */}
+        {/* =========================
+            Status
+        ========================= */}
+
         <View
           style={[
             styles.statusCard,
-            isCancelled &&
-              styles.statusCardDanger,
+            {
+              backgroundColor:
+                statusTheme.background,
+            },
           ]}
         >
-          <View style={styles.statusIcon}>
-            <Text style={styles.statusIconText}>
-              {booking.status === "completed"
-                ? "✓"
-                : isCancelled
-                  ? "!"
-                  : "⏳"}
+          <View
+            style={[
+              styles.statusIconContainer,
+              {
+                backgroundColor:
+                  statusTheme.iconBackground,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusIconText,
+                {
+                  color: statusTheme.iconColor,
+                },
+              ]}
+            >
+              {statusTheme.icon}
             </Text>
           </View>
 
           <View style={styles.statusContent}>
-            <Text style={styles.statusTitle}>
-              {getStatusLabel()}
-            </Text>
+            <View style={styles.statusTitleRow}>
+              <Text style={styles.statusTitle}>
+                {getStatusLabel()}
+              </Text>
+            </View>
 
             <Text style={styles.statusDescription}>
               {getStatusDescription()}
@@ -179,31 +251,56 @@ export default function BookingDetailScreen() {
           </View>
         </View>
 
-        {/* Nurse */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+        {/* =========================
             Nurse
-          </Text>
+        ========================= */}
+
+        <View style={styles.section}>
+          <SectionHeader
+            title="Nurse"
+            subtitle="Your assigned healthcare professional"
+          />
 
           <View style={styles.nurseCard}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {booking.nurse.name
-                  .charAt(0)
-                  .toUpperCase()}
-              </Text>
+            <View style={styles.avatarWrapper}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  👩‍⚕️
+                </Text>
+              </View>
+
+              {booking.nurse.verified && (
+                <View style={styles.avatarVerified}>
+                  <Text style={styles.avatarVerifiedText}>
+                    ✓
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.nurseInfo}>
               <View style={styles.nurseNameRow}>
-                <Text style={styles.nurseName}>
+                <Text
+                  style={styles.nurseName}
+                  numberOfLines={1}
+                >
                   {booking.nurse.name}
                 </Text>
 
                 {booking.nurse.verified && (
-                  <Text style={styles.verified}>
-                    ✓
-                  </Text>
+                  <View style={styles.verifiedBadge}>
+                    <Text
+                      style={styles.verifiedIcon}
+                    >
+                      ✓
+                    </Text>
+
+                    <Text
+                      style={styles.verifiedText}
+                    >
+                      Verified
+                    </Text>
+                  </View>
                 )}
               </View>
 
@@ -212,8 +309,12 @@ export default function BookingDetailScreen() {
               </Text>
 
               <View style={styles.ratingRow}>
+                <Text style={styles.star}>
+                  ★
+                </Text>
+
                 <Text style={styles.rating}>
-                  ⭐ {booking.nurse.rating}
+                  {booking.nurse.rating.toFixed(1)}
                 </Text>
 
                 <Text style={styles.reviewCount}>
@@ -224,11 +325,15 @@ export default function BookingDetailScreen() {
           </View>
         </View>
 
-        {/* Service */}
+        {/* =========================
+            Service
+        ========================= */}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Service Details
-          </Text>
+          <SectionHeader
+            title="Service Details"
+            subtitle="Information about your booking"
+          />
 
           <View style={styles.detailCard}>
             <DetailRow
@@ -255,29 +360,53 @@ export default function BookingDetailScreen() {
           </View>
         </View>
 
-        {/* Location */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Service Location
-          </Text>
+        {/* =========================
+            Location
+        ========================= */}
 
-          <View style={styles.detailCard}>
-            <DetailRow
-              icon="📍"
-              label="Address"
-              value={booking.address}
-            />
+        <View style={styles.section}>
+          <SectionHeader
+            title="Service Location"
+            subtitle="Where the nurse will provide care"
+          />
+
+          <View style={styles.locationCard}>
+            <View style={styles.locationIconContainer}>
+              <Text style={styles.locationIcon}>
+                📍
+              </Text>
+            </View>
+
+            <View style={styles.locationContent}>
+              <Text style={styles.locationLabel}>
+                SERVICE ADDRESS
+              </Text>
+
+              <Text style={styles.locationValue}>
+                {booking.address}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Notes */}
+        {/* =========================
+            Notes
+        ========================= */}
+
         {booking.notes ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Notes
-            </Text>
+            <SectionHeader
+              title="Notes"
+              subtitle="Additional information"
+            />
 
             <View style={styles.notesCard}>
+              <View style={styles.notesIconContainer}>
+                <Text style={styles.notesIcon}>
+                  📝
+                </Text>
+              </View>
+
               <Text style={styles.notesText}>
                 {booking.notes}
               </Text>
@@ -285,11 +414,15 @@ export default function BookingDetailScreen() {
           </View>
         ) : null}
 
-        {/* Timeline */}
+        {/* =========================
+            Timeline
+        ========================= */}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Booking Progress
-          </Text>
+          <SectionHeader
+            title="Booking Progress"
+            subtitle="Follow the progress of your care"
+          />
 
           <View style={styles.timeline}>
             <TimelineItem
@@ -302,9 +435,11 @@ export default function BookingDetailScreen() {
             <TimelineItem
               title="Accepted by Nurse"
               description="Waiting for nurse confirmation."
-              active={booking.status !== "pending" &&
+              active={
+                booking.status !== "pending" &&
                 booking.status !== "rejected" &&
-                booking.status !== "cancelled"}
+                booking.status !== "cancelled"
+              }
               completed={[
                 "on_the_way",
                 "arrived",
@@ -350,24 +485,34 @@ export default function BookingDetailScreen() {
                 "in_progress",
                 "completed",
               ].includes(booking.status)}
-              completed={booking.status === "completed"}
+              completed={
+                booking.status === "completed"
+              }
             />
 
             <TimelineItem
               title="Completed"
               description="Nursing service has been completed."
-              active={booking.status === "completed"}
-              completed={booking.status === "completed"}
+              active={
+                booking.status === "completed"
+              }
+              completed={
+                booking.status === "completed"
+              }
               last
             />
           </View>
         </View>
 
-        {/* Booking Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+        {/* =========================
             Booking Information
-          </Text>
+        ========================= */}
+
+        <View style={styles.section}>
+          <SectionHeader
+            title="Booking Information"
+            subtitle="Reference details"
+          />
 
           <View style={styles.detailCard}>
             <DetailRow
@@ -388,13 +533,20 @@ export default function BookingDetailScreen() {
           </View>
         </View>
 
-        {/* Cancel */}
+        {/* =========================
+            Cancel
+        ========================= */}
+
         {canCancel && (
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={handleCancelBooking}
             activeOpacity={0.8}
           >
+            <Text style={styles.cancelIcon}>
+              ×
+            </Text>
+
             <Text style={styles.cancelButtonText}>
               Cancel Booking
             </Text>
@@ -408,7 +560,31 @@ export default function BookingDetailScreen() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Components */
+/* Section Header */
+/* -------------------------------------------------------------------------- */
+
+function SectionHeader({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>
+        {title}
+      </Text>
+
+      <Text style={styles.sectionSubtitle}>
+        {subtitle}
+      </Text>
+    </View>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Detail Row */
 /* -------------------------------------------------------------------------- */
 
 function DetailRow({
@@ -422,9 +598,11 @@ function DetailRow({
 }) {
   return (
     <View style={styles.detailRow}>
-      <Text style={styles.detailIcon}>
-        {icon}
-      </Text>
+      <View style={styles.detailIconContainer}>
+        <Text style={styles.detailIcon}>
+          {icon}
+        </Text>
+      </View>
 
       <View style={styles.detailContent}>
         <Text style={styles.detailLabel}>
@@ -438,6 +616,10 @@ function DetailRow({
     </View>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Timeline */
+/* -------------------------------------------------------------------------- */
 
 function TimelineItem({
   title,
@@ -505,69 +687,81 @@ function TimelineItem({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: COLORS.background,
   },
 
+  /* Header */
+
   header: {
-    height: 100,
-    paddingTop: 48,
+    height: 82,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    borderBottomColor: COLORS.border,
   },
 
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F2",
+    borderRadius: 14,
+    backgroundColor: COLORS.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
 
   backText: {
     fontSize: 30,
-    lineHeight: 30,
-    color: "#333333",
+    lineHeight: 32,
+    color: COLORS.primaryDark,
+    marginTop: -2,
+  },
+
+  headerCenter: {
+    alignItems: "center",
   },
 
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
-    color: "#111111",
+    color: COLORS.text,
+  },
+
+  headerSubtitle: {
+    maxWidth: 170,
+    marginTop: 2,
+    fontSize: 9,
+    color: COLORS.textMuted,
   },
 
   headerSpacer: {
     width: 40,
   },
 
+  /* Content */
+
   content: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 40,
   },
+
+  /* Status */
 
   statusCard: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    borderRadius: 18,
-    backgroundColor: "#FFF8E5",
+    borderRadius: 20,
     marginBottom: 24,
   },
 
-  statusCardDanger: {
-    backgroundColor: "#FDEAEA",
-  },
-
-  statusIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
+  statusIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -579,113 +773,193 @@ const styles = StyleSheet.create({
 
   statusContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 13,
+  },
+
+  statusTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   statusTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#111111",
+    color: COLORS.text,
   },
 
   statusDescription: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 19,
-    color: "#666666",
+    marginTop: 5,
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.textSecondary,
   },
 
+  /* Sections */
+
   section: {
-    marginBottom: 22,
+    marginBottom: 23,
+  },
+
+  sectionHeader: {
+    marginBottom: 10,
   },
 
   sectionTitle: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#111111",
-    marginBottom: 10,
+    color: COLORS.text,
   },
+
+  sectionSubtitle: {
+    marginTop: 3,
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+
+  /* Nurse */
 
   nurseCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     padding: 16,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.03,
+    shadowRadius: 7,
+    elevation: 2,
+  },
+
+  avatarWrapper: {
+    position: "relative",
   },
 
   avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#EAF4FF",
+    width: 60,
+    height: 60,
+    borderRadius: 19,
+    backgroundColor: COLORS.primaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
 
   avatarText: {
-    fontSize: 22,
+    fontSize: 29,
+  },
+
+  avatarVerified: {
+    position: "absolute",
+    right: -3,
+    bottom: -3,
+    width: 21,
+    height: 21,
+    borderRadius: 11,
+    backgroundColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  avatarVerifiedText: {
+    color: COLORS.white,
+    fontSize: 10,
     fontWeight: "800",
-    color: "#2F80ED",
   },
 
   nurseInfo: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 13,
+    minWidth: 0,
   },
 
   nurseNameRow: {
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 21,
   },
 
   nurseName: {
-    fontSize: 17,
+    flexShrink: 1,
+    fontSize: 16,
     fontWeight: "800",
-    color: "#111111",
+    color: COLORS.text,
   },
 
-  verified: {
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#2F80ED",
-    color: "#FFFFFF",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  verifiedIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: COLORS.primary,
+    color: COLORS.white,
     textAlign: "center",
-    lineHeight: 18,
-    fontSize: 11,
+    fontSize: 9,
+    lineHeight: 14,
     fontWeight: "800",
+    marginRight: 4,
+  },
+
+  verifiedText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: COLORS.primaryDark,
   },
 
   specialization: {
     marginTop: 4,
-    fontSize: 13,
-    color: "#777777",
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
 
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 5,
+    marginTop: 6,
+  },
+
+  star: {
+    color: "#F59E0B",
+    fontSize: 12,
+    marginRight: 4,
   },
 
   rating: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#333333",
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   reviewCount: {
     marginLeft: 5,
-    fontSize: 12,
-    color: "#999999",
+    fontSize: 10,
+    color: COLORS.textMuted,
   },
 
+  /* Detail */
+
   detailCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 18,
     padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 
   detailRow: {
@@ -693,50 +967,129 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
 
+  detailIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   detailIcon: {
-    width: 32,
-    fontSize: 18,
+    fontSize: 17,
   },
 
   detailContent: {
     flex: 1,
+    marginLeft: 11,
   },
 
   detailLabel: {
-    fontSize: 12,
-    color: "#999999",
-    marginBottom: 3,
+    fontSize: 9,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    letterSpacing: 0.4,
+    marginBottom: 4,
   },
 
   detailValue: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 19,
     fontWeight: "600",
-    color: "#333333",
-    lineHeight: 20,
+    color: COLORS.text,
   },
 
   detailDivider: {
     height: 1,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
 
-  notesCard: {
-    backgroundColor: "#FFFFFF",
+  /* Location */
+
+  locationCard: {
+    flexDirection: "row",
+    backgroundColor: COLORS.surface,
     borderRadius: 18,
     padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  locationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  locationIcon: {
+    fontSize: 18,
+  },
+
+  locationContent: {
+    flex: 1,
+    marginLeft: 11,
+  },
+
+  locationLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+
+  locationValue: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "600",
+    color: COLORS.text,
+  },
+
+  /* Notes */
+
+  notesCard: {
+    flexDirection: "row",
+    backgroundColor: COLORS.primarySoft,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+  },
+
+  notesIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  notesIcon: {
+    fontSize: 17,
   },
 
   notesText: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#555555",
+    flex: 1,
+    marginLeft: 11,
+    fontSize: 13,
+    lineHeight: 20,
+    color: COLORS.text,
   },
 
+  /* Timeline */
+
   timeline: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 18,
-    padding: 16,
+    padding: 17,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 
   timelineItem: {
@@ -754,19 +1107,19 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: "#D8D8D8",
-    backgroundColor: "#FFFFFF",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
   },
 
   timelineDotActive: {
-    borderColor: "#2F80ED",
-    backgroundColor: "#2F80ED",
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
   },
 
   timelineCheck: {
-    color: "#FFFFFF",
+    color: COLORS.white,
     fontSize: 11,
     fontWeight: "800",
   },
@@ -774,12 +1127,12 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: "#E5E5E5",
+    backgroundColor: COLORS.border,
     marginVertical: 3,
   },
 
   timelineLineActive: {
-    backgroundColor: "#2F80ED",
+    backgroundColor: COLORS.primary,
   },
 
   timelineContent: {
@@ -791,77 +1144,103 @@ const styles = StyleSheet.create({
   timelineTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#999999",
+    color: COLORS.textMuted,
   },
 
   timelineTitleActive: {
-    color: "#111111",
+    color: COLORS.text,
   },
 
   timelineDescription: {
     marginTop: 3,
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#999999",
+    fontSize: 11,
+    lineHeight: 17,
+    color: COLORS.textMuted,
   },
+
+  /* Cancel */
 
   cancelButton: {
     height: 52,
-    borderRadius: 14,
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#E74C3C",
+    borderColor: COLORS.danger,
+    backgroundColor: "#FEF2F2",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 4,
+    marginTop: 2,
+  },
+
+  cancelIcon: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.danger,
+    marginRight: 7,
   },
 
   cancelButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#E74C3C",
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.danger,
   },
 
   bottomSpace: {
     height: 20,
   },
 
+  /* Error */
+
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 30,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: COLORS.background,
+  },
+
+  errorIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   errorIcon: {
-    fontSize: 50,
+    fontSize: 42,
   },
 
   errorTitle: {
-    marginTop: 16,
+    marginTop: 18,
     fontSize: 21,
     fontWeight: "800",
-    color: "#111111",
+    color: COLORS.text,
   },
 
   errorText: {
     marginTop: 8,
-    fontSize: 14,
-    color: "#777777",
+    fontSize: 13,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
 
   backHomeButton: {
     marginTop: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: "#111111",
+    minWidth: 190,
+    height: 50,
+    paddingHorizontal: 20,
+    borderRadius: 15,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   backHomeText: {
-    color: "#FFFFFF",
+    color: COLORS.white,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

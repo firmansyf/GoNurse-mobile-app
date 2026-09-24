@@ -1,15 +1,17 @@
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-import { router, useLocalSearchParams } from "expo-router";
-
+import { COLORS } from "@/constants/colors";
 import { useBookingStore } from "@/store/booking-store";
+import type { BookingStatus } from "@/types/booking";
 
 export default function NurseBookingDetailScreen() {
   const { id } = useLocalSearchParams<{
@@ -20,33 +22,34 @@ export default function NurseBookingDetailScreen() {
     state.getBookingById(id),
   );
 
-  const updateBookingStatus =
-    useBookingStore(
-      (state) => state.updateBookingStatus,
-    );
+  const updateBookingStatus = useBookingStore(
+    (state) => state.updateBookingStatus,
+  );
+
+  const [isStartingTrip, setIsStartingTrip] =
+    useState(false);
 
   if (!booking) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorIcon}>
-          ⚠️
-        </Text>
+      <View style={styles.errorContainer}>
+        <View style={styles.errorIconContainer}>
+          <Text style={styles.errorIcon}>!</Text>
+        </View>
 
         <Text style={styles.errorTitle}>
           Booking not found
         </Text>
 
         <Text style={styles.errorText}>
-          This booking may no longer be
-          available.
+          This booking may no longer be available.
         </Text>
 
         <TouchableOpacity
-          style={styles.backButton}
+          style={styles.errorButton}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <Text style={styles.backButtonText}>
+          <Text style={styles.errorButtonText}>
             Go Back
           </Text>
         </TouchableOpacity>
@@ -66,28 +69,37 @@ export default function NurseBookingDetailScreen() {
         {
           text: "Start Trip",
           onPress: () => {
+            setIsStartingTrip(true);
+
             updateBookingStatus(
               booking.id,
               "on_the_way",
             );
+
+            setIsStartingTrip(false);
           },
         },
       ],
     );
   };
 
+  const statusTheme = getStatusTheme(
+    booking.status,
+  );
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* =========================
+          HEADER
+      ========================= */}
+
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerBack}
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <Text style={styles.headerBackText}>
-            ←
-          </Text>
+          <Text style={styles.headerBackText}>‹</Text>
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>
@@ -99,128 +111,174 @@ export default function NurseBookingDetailScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={
-          styles.content
-        }
+        contentContainerStyle={styles.content}
       >
-        {/* Status */}
-        <View style={styles.statusCard}>
-          <Text style={styles.statusLabel}>
-            BOOKING STATUS
+        {/* =========================
+            STATUS HERO
+        ========================= */}
+
+        <View
+          style={[
+            styles.statusCard,
+            {
+              backgroundColor:
+                statusTheme.background,
+              borderColor: statusTheme.border,
+            },
+          ]}
+        >
+          <View style={styles.statusTopRow}>
+            <View
+              style={[
+                styles.statusIcon,
+                {
+                  backgroundColor:
+                    statusTheme.iconBackground,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusIconText,
+                  {
+                    color: statusTheme.color,
+                  },
+                ]}
+              >
+                {statusTheme.icon}
+              </Text>
+            </View>
+
+            <View style={styles.statusContent}>
+              <Text style={styles.statusLabel}>
+                BOOKING STATUS
+              </Text>
+
+              <Text
+                style={[
+                  styles.statusText,
+                  {
+                    color: statusTheme.color,
+                  },
+                ]}
+              >
+                {getStatusLabel(booking.status)}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.statusDescription}>
+            {getStatusDescription(booking.status)}
           </Text>
+        </View>
 
-          <View style={styles.statusRow}>
-            <View style={styles.statusDot} />
+        {/* =========================
+            PATIENT
+        ========================= */}
 
-            <Text style={styles.statusText}>
-              {getStatusLabel(
-                booking.status,
-              )}
+        <SectionTitle title="Patient" />
+
+        <View style={styles.patientCard}>
+          <View style={styles.patientAvatar}>
+            <Text style={styles.patientAvatarText}>
+              👤
+            </Text>
+          </View>
+
+          <View style={styles.patientInfo}>
+            <Text style={styles.patientName}>
+              Patient
+            </Text>
+
+            <Text style={styles.bookingId}>
+              Booking #{booking.id}
+            </Text>
+          </View>
+
+          <View style={styles.patientBadge}>
+            <Text style={styles.patientBadgeText}>
+              Patient
             </Text>
           </View>
         </View>
 
-        {/* Patient */}
+        {/* =========================
+            SERVICE
+        ========================= */}
+
+        <SectionTitle title="Service Details" />
+
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Patient
-          </Text>
-
-          <View style={styles.patientRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                👤
-              </Text>
-            </View>
-
-            <View style={styles.patientInfo}>
-              <Text style={styles.patientName}>
-                Patient
-              </Text>
-
-              <Text style={styles.bookingId}>
-                #{booking.id}
-              </Text>
-            </View>
-          </View>
+          <DetailRow
+            icon="🩺"
+            label="Service"
+            value={booking.service}
+          />
         </View>
 
-        {/* Service */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Service
-          </Text>
+        {/* =========================
+            SCHEDULE
+        ========================= */}
 
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>
-              🩺
-            </Text>
+        <SectionTitle title="Schedule" />
 
-            <View style={styles.detailContent}>
+        <View style={styles.scheduleCard}>
+          <View style={styles.scheduleItem}>
+            <View style={styles.scheduleIcon}>
+              <Text style={styles.scheduleIconText}>
+                📅
+              </Text>
+            </View>
+
+            <View style={styles.scheduleContent}>
               <Text style={styles.detailLabel}>
-                Service
+                DATE
               </Text>
 
-              <Text style={styles.detailValue}>
-                {booking.service}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Schedule */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Schedule
-          </Text>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>
-              📅
-            </Text>
-
-            <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>
-                Date
-              </Text>
-
-              <Text style={styles.detailValue}>
+              <Text style={styles.scheduleValue}>
                 {booking.date}
               </Text>
             </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>
-              🕐
-            </Text>
+          <View style={styles.scheduleDivider} />
 
-            <View style={styles.detailContent}>
+          <View style={styles.scheduleItem}>
+            <View style={styles.scheduleIcon}>
+              <Text style={styles.scheduleIconText}>
+                🕐
+              </Text>
+            </View>
+
+            <View style={styles.scheduleContent}>
               <Text style={styles.detailLabel}>
-                Time
+                TIME
               </Text>
 
-              <Text style={styles.detailValue}>
+              <Text style={styles.scheduleValue}>
                 {booking.time}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Location */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Patient Location
-          </Text>
+        {/* =========================
+            LOCATION
+        ========================= */}
 
+        <SectionTitle title="Patient Location" />
+
+        <View style={styles.card}>
           <View style={styles.locationBox}>
-            <Text style={styles.locationIcon}>
-              📍
-            </Text>
+            <View style={styles.locationIcon}>
+              <Text style={styles.locationIconText}>
+                📍
+              </Text>
+            </View>
 
             <View style={styles.locationContent}>
-              <Text style={styles.locationLabel}>
-                Address
+              <Text style={styles.detailLabel}>
+                SERVICE ADDRESS
               </Text>
 
               <Text style={styles.locationText}>
@@ -233,81 +291,215 @@ export default function NurseBookingDetailScreen() {
             style={styles.mapButton}
             activeOpacity={0.8}
           >
+            <Text style={styles.mapButtonIcon}>
+              📍
+            </Text>
+
             <Text style={styles.mapButtonText}>
               View Location
+            </Text>
+
+            <Text style={styles.mapButtonArrow}>
+              →
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Notes */}
-        {booking.notes ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>
-              Patient Notes
-            </Text>
+        {/* =========================
+            NOTES
+        ========================= */}
 
-            <View style={styles.notesBox}>
+        {booking.notes ? (
+          <>
+            <SectionTitle title="Patient Notes" />
+
+            <View style={styles.notesCard}>
+              <View style={styles.notesHeader}>
+                <View style={styles.notesIcon}>
+                  <Text style={styles.notesIconText}>
+                    i
+                  </Text>
+                </View>
+
+                <Text style={styles.notesTitle}>
+                  Additional Information
+                </Text>
+              </View>
+
               <Text style={styles.notesText}>
                 {booking.notes}
               </Text>
             </View>
-          </View>
+          </>
         ) : null}
 
-        {/* Booking Information */}
+        {/* =========================
+            BOOKING INFORMATION
+        ========================= */}
+
+        <SectionTitle title="Booking Information" />
+
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            Booking Information
-          </Text>
+          <InfoRow
+            label="Booking ID"
+            value={booking.id}
+          />
 
-          <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>
-              Booking ID
-            </Text>
+          <View style={styles.infoDivider} />
 
-            <Text style={styles.metaValue}>
-              {booking.id}
-            </Text>
-          </View>
-
-          <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>
-              Created
-            </Text>
-
-            <Text style={styles.metaValue}>
-              {formatDate(
-                booking.createdAt,
-              )}
-            </Text>
-          </View>
+          <InfoRow
+            label="Created"
+            value={formatDate(booking.createdAt)}
+          />
         </View>
 
-        {/* Action */}
+        {/* =========================
+            ACTION
+        ========================= */}
+
         {booking.status === "accepted" && (
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={handleStartTrip}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.primaryButtonText}>
-              Start Trip
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.actionSection}>
+            <View style={styles.actionHint}>
+              <Text style={styles.actionHintIcon}>
+                🚗
+              </Text>
+
+              <View style={styles.actionHintContent}>
+                <Text style={styles.actionHintTitle}>
+                  Ready to visit the patient?
+                </Text>
+
+                <Text
+                  style={styles.actionHintDescription}
+                >
+                  Start your trip when you are ready to
+                  travel to the patient's location.
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleStartTrip}
+              activeOpacity={0.8}
+              disabled={isStartingTrip}
+            >
+              <Text style={styles.primaryButtonIcon}>
+                🚗
+              </Text>
+
+              <Text style={styles.primaryButtonText}>
+                {isStartingTrip
+                  ? "Starting Trip..."
+                  : "Start Trip"}
+              </Text>
+
+              {!isStartingTrip && (
+                <Text style={styles.primaryButtonArrow}>
+                  →
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
         )}
 
-        {booking.status === "on_the_way" && (
-          <View style={styles.waitingCard}>
-            <Text style={styles.waitingIcon}>
-              🚗
-            </Text>
+        {/* =========================
+            ON THE WAY
+        ========================= */}
 
-            <Text style={styles.waitingTitle}>
+        {booking.status === "on_the_way" && (
+          <View style={styles.travelCard}>
+            <View style={styles.travelIconContainer}>
+              <Text style={styles.travelIcon}>🚗</Text>
+            </View>
+
+            <Text style={styles.travelTitle}>
               You're on the way
             </Text>
 
-            <Text style={styles.waitingText}>
-              Travel to the patient's location.
+            <Text style={styles.travelText}>
+              Travel safely to the patient's location.
+              The booking will be updated when you arrive.
+            </Text>
+
+            <View style={styles.travelStatus}>
+              <View style={styles.travelStatusDot} />
+
+              <Text style={styles.travelStatusText}>
+                Trip in progress
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* =========================
+            ARRIVED
+        ========================= */}
+
+        {booking.status === "arrived" && (
+          <View style={styles.activeStatusCard}>
+            <View style={styles.activeStatusIcon}>
+              <Text style={styles.activeStatusIconText}>
+                ✓
+              </Text>
+            </View>
+
+            <View style={styles.activeStatusContent}>
+              <Text style={styles.activeStatusTitle}>
+                You've arrived
+              </Text>
+
+              <Text style={styles.activeStatusText}>
+                You are at the patient's location.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* =========================
+            IN PROGRESS
+        ========================= */}
+
+        {booking.status === "in_progress" && (
+          <View style={styles.activeStatusCard}>
+            <View style={styles.activeStatusIcon}>
+              <Text style={styles.activeStatusIconText}>
+                🩺
+              </Text>
+            </View>
+
+            <View style={styles.activeStatusContent}>
+              <Text style={styles.activeStatusTitle}>
+                Service in progress
+              </Text>
+
+              <Text style={styles.activeStatusText}>
+                You are currently providing care to the
+                patient.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* =========================
+            COMPLETED
+        ========================= */}
+
+        {booking.status === "completed" && (
+          <View style={styles.completedCard}>
+            <View style={styles.completedIcon}>
+              <Text style={styles.completedIconText}>
+                ✓
+              </Text>
+            </View>
+
+            <Text style={styles.completedTitle}>
+              Booking completed
+            </Text>
+
+            <Text style={styles.completedText}>
+              This nursing service has been completed
+              successfully.
             </Text>
           </View>
         )}
@@ -316,12 +508,89 @@ export default function NurseBookingDetailScreen() {
   );
 }
 
-/* =====================================================
-   STATUS LABEL
-===================================================== */
+// =====================================================
+// SECTION TITLE
+// =====================================================
+
+function SectionTitle({
+  title,
+}: {
+  title: string;
+}) {
+  return (
+    <Text style={styles.sectionTitle}>
+      {title}
+    </Text>
+  );
+}
+
+// =====================================================
+// DETAIL ROW
+// =====================================================
+
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.detailRow}>
+      <View style={styles.detailIcon}>
+        <Text style={styles.detailIconText}>
+          {icon}
+        </Text>
+      </View>
+
+      <View style={styles.detailContent}>
+        <Text style={styles.detailLabel}>
+          {label}
+        </Text>
+
+        <Text style={styles.detailValue}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// =====================================================
+// INFO ROW
+// =====================================================
+
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>
+        {label}
+      </Text>
+
+      <Text
+        style={styles.infoValue}
+        numberOfLines={1}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+// =====================================================
+// STATUS LABEL
+// =====================================================
 
 function getStatusLabel(
-  status: string,
+  status: BookingStatus,
 ) {
   switch (status) {
     case "pending":
@@ -353,329 +622,851 @@ function getStatusLabel(
   }
 }
 
-/* =====================================================
-   FORMAT DATE
-===================================================== */
+// =====================================================
+// STATUS DESCRIPTION
+// =====================================================
 
-function formatDate(
-  value: string,
+function getStatusDescription(
+  status: BookingStatus,
 ) {
+  switch (status) {
+    case "pending":
+      return "This booking is waiting for your response.";
+
+    case "accepted":
+      return "You accepted this booking. Start your trip when you're ready.";
+
+    case "on_the_way":
+      return "You are currently travelling to the patient's location.";
+
+    case "arrived":
+      return "You have arrived at the patient's location.";
+
+    case "in_progress":
+      return "The nursing service is currently in progress.";
+
+    case "completed":
+      return "This booking has been completed successfully.";
+
+    case "rejected":
+      return "This booking was rejected.";
+
+    case "cancelled":
+      return "This booking has been cancelled.";
+
+    default:
+      return "Booking status information.";
+  }
+}
+
+// =====================================================
+// STATUS THEME
+// =====================================================
+
+function getStatusTheme(
+  status: BookingStatus,
+) {
+  switch (status) {
+    case "accepted":
+      return {
+        color: COLORS.primaryDark,
+        background: COLORS.primarySoft,
+        border: COLORS.primaryLight,
+        iconBackground: COLORS.primaryLight,
+        icon: "✓",
+      };
+
+    case "on_the_way":
+      return {
+        color: COLORS.info,
+        background: "#EFF6FF",
+        border: "#BFDBFE",
+        iconBackground: "#DBEAFE",
+        icon: "→",
+      };
+
+    case "arrived":
+      return {
+        color: COLORS.primaryDark,
+        background: COLORS.primarySoft,
+        border: COLORS.primaryLight,
+        iconBackground: COLORS.primaryLight,
+        icon: "✓",
+      };
+
+    case "in_progress":
+      return {
+        color: COLORS.info,
+        background: "#EFF6FF",
+        border: "#BFDBFE",
+        iconBackground: "#DBEAFE",
+        icon: "✚",
+      };
+
+    case "completed":
+      return {
+        color: COLORS.primaryDark,
+        background: COLORS.primarySoft,
+        border: COLORS.primaryLight,
+        iconBackground: COLORS.primaryLight,
+        icon: "✓",
+      };
+
+    case "rejected":
+    case "cancelled":
+      return {
+        color: COLORS.danger,
+        background: "#FEF2F2",
+        border: "#FECACA",
+        iconBackground: "#FEE2E2",
+        icon: "!",
+      };
+
+    case "pending":
+    default:
+      return {
+        color: COLORS.warning,
+        background: "#FFFBEB",
+        border: "#FDE68A",
+        iconBackground: "#FEF3C7",
+        icon: "!",
+      };
+  }
+}
+
+// =====================================================
+// FORMAT DATE
+// =====================================================
+
+function formatDate(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleString(
-    "id-ID",
-    {
-      dateStyle: "medium",
-      timeStyle: "short",
-    },
-  );
+  return date.toLocaleString("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
-/* =====================================================
-   STYLES
-===================================================== */
+// =====================================================
+// STYLES
+// =====================================================
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: COLORS.background,
   },
 
-  center: {
+  // =========================
+  // ERROR
+  // =========================
+
+  errorContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+    backgroundColor: COLORS.background,
   },
 
-  errorIcon: {
-    fontSize: 40,
-  },
-
-  errorTitle: {
-    marginTop: 12,
-    fontSize: 20,
-    fontWeight: "800",
-  },
-
-  errorText: {
-    marginTop: 6,
-    color: "#777",
-    textAlign: "center",
-  },
-
-  backButton: {
-    marginTop: 24,
-    paddingHorizontal: 24,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: "#111",
+  errorIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#FEF2F2",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  backButtonText: {
-    color: "#fff",
-    fontWeight: "700",
+  errorIcon: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: COLORS.danger,
   },
 
+  errorTitle: {
+    marginTop: 18,
+    fontSize: 22,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  errorText: {
+    marginTop: 7,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    fontSize: 14,
+  },
+
+  errorButton: {
+    marginTop: 24,
+    paddingHorizontal: 26,
+    height: 48,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  errorButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  // =========================
+  // HEADER
+  // =========================
+
   header: {
-    height: 100,
+    height: 108,
     paddingTop: 45,
     paddingHorizontal: 20,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
 
   headerBack: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F2F2F2",
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
 
   headerBackText: {
-    fontSize: 22,
-    color: "#333",
+    fontSize: 32,
+    lineHeight: 32,
+    color: COLORS.primaryDark,
+    marginTop: -3,
   },
 
   headerTitle: {
     fontSize: 18,
     fontWeight: "800",
+    color: COLORS.text,
   },
 
   headerSpacer: {
     width: 40,
   },
 
+  // =========================
+  // CONTENT
+  // =========================
+
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 48,
   },
+
+  // =========================
+  // STATUS
+  // =========================
 
   statusCard: {
     padding: 18,
-    borderRadius: 18,
-    backgroundColor: "#fff",
-    marginBottom: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 22,
   },
 
-  statusLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#999",
-    letterSpacing: 0.5,
-  },
-
-  statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#111",
-    marginRight: 8,
-  },
-
-  statusText: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 14,
-  },
-
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    marginBottom: 16,
-  },
-
-  patientRow: {
+  statusTopRow: {
     flexDirection: "row",
     alignItems: "center",
   },
 
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#F2F2F2",
+  statusIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  avatarText: {
-    fontSize: 24,
+  statusIconText: {
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  statusContent: {
+    flex: 1,
+    marginLeft: 13,
+  },
+
+  statusLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: COLORS.textMuted,
+  },
+
+  statusText: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 3,
+  },
+
+  statusDescription: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textSecondary,
+    marginTop: 13,
+  },
+
+  // =========================
+  // SECTION
+  // =========================
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom: 10,
+  },
+
+  // =========================
+  // PATIENT
+  // =========================
+
+  patientCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  patientAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  patientAvatarText: {
+    fontSize: 25,
   },
 
   patientInfo: {
-    marginLeft: 12,
+    flex: 1,
+    marginLeft: 13,
   },
 
   patientName: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
+    color: COLORS.text,
   },
 
   bookingId: {
-    marginTop: 3,
+    marginTop: 4,
     fontSize: 12,
-    color: "#888",
+    color: COLORS.textMuted,
   },
+
+  patientBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  patientBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: COLORS.primaryDark,
+  },
+
+  // =========================
+  // CARD
+  // =========================
+
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  // =========================
+  // DETAIL
+  // =========================
 
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 14,
   },
 
   detailIcon: {
-    width: 32,
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  detailIconText: {
     fontSize: 20,
   },
 
   detailContent: {
     flex: 1,
+    marginLeft: 12,
   },
 
   detailLabel: {
-    fontSize: 11,
-    color: "#999",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+    color: COLORS.textMuted,
   },
 
   detailValue: {
-    marginTop: 3,
+    marginTop: 4,
     fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: COLORS.text,
   },
+
+  // =========================
+  // SCHEDULE
+  // =========================
+
+  scheduleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  scheduleItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  scheduleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  scheduleIconText: {
+    fontSize: 18,
+  },
+
+  scheduleContent: {
+    flex: 1,
+    marginLeft: 9,
+  },
+
+  scheduleValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.text,
+    marginTop: 4,
+  },
+
+  scheduleDivider: {
+    width: 1,
+    height: 42,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 12,
+  },
+
+  // =========================
+  // LOCATION
+  // =========================
 
   locationBox: {
     flexDirection: "row",
     padding: 14,
-    borderRadius: 14,
-    backgroundColor: "#F7F7F7",
+    borderRadius: 15,
+    backgroundColor: COLORS.primarySoft,
   },
 
   locationIcon: {
-    fontSize: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  locationIconText: {
+    fontSize: 20,
   },
 
   locationContent: {
     flex: 1,
-    marginLeft: 10,
-  },
-
-  locationLabel: {
-    fontSize: 11,
-    color: "#999",
+    marginLeft: 11,
   },
 
   locationText: {
-    marginTop: 3,
+    marginTop: 5,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     fontWeight: "600",
+    color: COLORS.text,
   },
 
   mapButton: {
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#F1F1F1",
+    height: 46,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 12,
   },
 
-  mapButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
+  mapButtonIcon: {
+    fontSize: 16,
+    marginRight: 7,
   },
 
-  notesBox: {
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: "#F7F7F7",
+  mapButtonText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.white,
+  },
+
+  mapButtonArrow: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.white,
+    marginLeft: 8,
+  },
+
+  // =========================
+  // NOTES
+  // =========================
+
+  notesCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  notesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  notesIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  notesIconText: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: COLORS.primaryDark,
+  },
+
+  notesTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginLeft: 10,
   },
 
   notesText: {
     fontSize: 14,
-    lineHeight: 21,
-    color: "#444",
+    lineHeight: 22,
+    color: COLORS.textSecondary,
   },
 
-  metaRow: {
+  // =========================
+  // BOOKING INFORMATION
+  // =========================
+
+  infoRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 8,
     gap: 20,
+    paddingVertical: 5,
   },
 
-  metaLabel: {
+  infoLabel: {
     fontSize: 13,
-    color: "#888",
+    color: COLORS.textSecondary,
   },
 
-  metaValue: {
+  infoValue: {
     flex: 1,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: COLORS.text,
     textAlign: "right",
   },
 
+  infoDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 8,
+  },
+
+  // =========================
+  // ACTION
+  // =========================
+
+  actionSection: {
+    marginTop: 2,
+  },
+
+  actionHint: {
+    flexDirection: "row",
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    marginBottom: 12,
+  },
+
+  actionHintIcon: {
+    fontSize: 24,
+  },
+
+  actionHintContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  actionHintTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  actionHintDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.textSecondary,
+    marginTop: 3,
+  },
+
   primaryButton: {
-    height: 54,
-    borderRadius: 14,
-    backgroundColor: "#111",
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: COLORS.primary,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 4,
+    paddingHorizontal: 20,
+  },
+
+  primaryButtonIcon: {
+    fontSize: 19,
+    marginRight: 8,
   },
 
   primaryButtonText: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: "700",
-  },
-
-  waitingCard: {
-    padding: 24,
-    borderRadius: 18,
-    backgroundColor: "#fff",
-    alignItems: "center",
-  },
-
-  waitingIcon: {
-    fontSize: 36,
-  },
-
-  waitingTitle: {
-    marginTop: 10,
-    fontSize: 18,
     fontWeight: "800",
   },
 
-  waitingText: {
+  primaryButtonArrow: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: "700",
+    marginLeft: 10,
+  },
+
+  // =========================
+  // TRAVEL
+  // =========================
+
+  travelCard: {
+    alignItems: "center",
+    padding: 22,
+    borderRadius: 20,
+    backgroundColor: COLORS.info === "#2563EB"
+      ? "#EFF6FF"
+      : COLORS.surface,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    marginTop: 2,
+  },
+
+  travelIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#DBEAFE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  travelIcon: {
+    fontSize: 30,
+  },
+
+  travelTitle: {
+    marginTop: 12,
+    fontSize: 19,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  travelText: {
     marginTop: 5,
-    fontSize: 14,
-    color: "#777",
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+  },
+
+  travelStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: COLORS.white,
+  },
+
+  travelStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.info,
+    marginRight: 7,
+  },
+
+  travelStatusText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.info,
+  },
+
+  // =========================
+  // ACTIVE STATUS
+  // =========================
+
+  activeStatusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 17,
+    borderRadius: 18,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    marginTop: 2,
+  },
+
+  activeStatusIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  activeStatusIconText: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: "900",
+  },
+
+  activeStatusContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  activeStatusTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  activeStatusText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.textSecondary,
+    marginTop: 3,
+  },
+
+  // =========================
+  // COMPLETED
+  // =========================
+
+  completedCard: {
+    alignItems: "center",
+    padding: 22,
+    borderRadius: 20,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    marginTop: 2,
+  },
+
+  completedIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  completedIconText: {
+    color: COLORS.white,
+    fontSize: 27,
+    fontWeight: "900",
+  },
+
+  completedTitle: {
+    marginTop: 12,
+    fontSize: 19,
+    fontWeight: "800",
+    color: COLORS.text,
+  },
+
+  completedText: {
+    marginTop: 5,
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
 });
