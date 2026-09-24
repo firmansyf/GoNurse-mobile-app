@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     paddingBottom: 16,
+    backgroundColor: 'red'
   },
 
   register: {
