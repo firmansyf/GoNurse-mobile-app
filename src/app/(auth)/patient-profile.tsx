@@ -10,11 +10,10 @@ import {
 
 import { useState } from "react";
 
-import {
-  getCurrentLocation,
-  requestLocationPermission,
-} from "@/services/location";
+import { requestLocationPermission } from "@/services/location";
 import { useAuthStore } from "@/store/auth-store";
+
+import { getUserLocation } from "@/utils/location";
 
 export default function PatientProfileScreen() {
   const setPatientProfile = useAuthStore(
@@ -27,6 +26,7 @@ export default function PatientProfileScreen() {
     try {
       setLoading(true);
 
+      // Request location permission
       const permission =
         await requestLocationPermission();
 
@@ -39,7 +39,19 @@ export default function PatientProfileScreen() {
         return;
       }
 
-      const location = await getCurrentLocation();
+      // Get location based on development configuration
+      //
+      // useDummyLocation: true
+      // → menggunakan lokasi dummy Bank DKI
+      //
+      // useDummyLocation: false
+      // → menggunakan GPS asli device
+      const location = await getUserLocation();
+
+      console.log("PATIENT LOCATION:", {
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
 
       setPatientProfile({
         latitude: location.latitude,
@@ -48,7 +60,7 @@ export default function PatientProfileScreen() {
 
       router.replace("/(patient)/home");
     } catch (error) {
-      console.error(error);
+      console.error("Location error:", error);
 
       Alert.alert(
         "Location Error",
@@ -96,6 +108,7 @@ export default function PatientProfileScreen() {
         ]}
         onPress={handleContinue}
         disabled={loading}
+        activeOpacity={0.8}
       >
         {loading ? (
           <ActivityIndicator color="#fff" />

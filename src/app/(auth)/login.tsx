@@ -170,8 +170,7 @@ const styles = StyleSheet.create({
   bottom: {
     flexDirection: "row",
     justifyContent: "center",
-    paddingBottom: 16,
-    backgroundColor: 'red'
+    marginBottom: 30,
   },
 
   register: {

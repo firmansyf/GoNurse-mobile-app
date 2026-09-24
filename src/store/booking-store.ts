@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 import type {
-    Booking,
-    BookingStatus,
+  Booking,
+  BookingStatus,
 } from "@/types/booking";
 
 interface CreateBookingInput {
@@ -32,26 +32,43 @@ interface BookingState {
   getBookingById: (
     bookingId: string,
   ) => Booking | undefined;
+
+  // Get bookings assigned to a specific nurse
+  getBookingsByNurseId: (
+    nurseId: string,
+  ) => Booking[];
 }
 
 export const useBookingStore =
   create<BookingState>((set, get) => ({
     bookings: [],
 
+    // =====================================================
+    // CREATE BOOKING
+    // =====================================================
+
     createBooking: (input) => {
       const booking: Booking = {
         id: `booking-${Date.now()}`,
+
         nurseId: input.nurseId,
+
         patientId: input.patientId,
+
         nurse: input.nurse,
 
         service: input.service,
+
         date: input.date,
+
         time: input.time,
 
         address: input.address,
+
         notes: input.notes,
+
         status: "pending",
+
         createdAt: new Date().toISOString(),
       };
 
@@ -64,6 +81,10 @@ export const useBookingStore =
 
       return booking;
     },
+
+    // =====================================================
+    // UPDATE BOOKING STATUS
+    // =====================================================
 
     updateBookingStatus: (
       bookingId,
@@ -82,10 +103,25 @@ export const useBookingStore =
       }));
     },
 
+    // =====================================================
+    // GET BOOKING BY ID
+    // =====================================================
+
     getBookingById: (bookingId) => {
       return get().bookings.find(
         (booking) =>
           booking.id === bookingId,
+      );
+    },
+
+    // =====================================================
+    // GET BOOKINGS BY NURSE ID
+    // =====================================================
+
+    getBookingsByNurseId: (nurseId) => {
+      return get().bookings.filter(
+        (booking) =>
+          booking.nurseId === nurseId,
       );
     },
   }));
