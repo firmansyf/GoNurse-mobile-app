@@ -1,56 +1,75 @@
-# Welcome to your Expo app 👋
+# 🩺 GoNurse
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+GoNurse is a healthcare mobile application designed to connect patients with nearby nurses for professional nursing services.
 
-## Get started
+The application allows patients to discover nurses based on their location, view nurse profiles, request nursing services, and track their bookings.
 
-1. Install dependencies
+For nurses, GoNurse provides a professional onboarding and credential verification flow, as well as tools to manage incoming and active bookings.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## ✨ Features
 
-   ```bash
-   npx expo start
-   ```
+### 👤 Patient
 
-In the output, you'll find options to open the app in a
+- Register and login
+- Select user role
+- Set current location
+- Discover nearby nurses
+- Search nurses within a specific radius
+- View nurse profile
+- View nurse specialization
+- View nurse rating and reviews
+- View available nursing services
+- Book a nurse
+- Select service date and time
+- Add service address
+- Add additional notes
+- Review booking before confirmation
+- View booking history
+- View booking details
+- Track booking status
+- Cancel eligible bookings
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 👩‍⚕️ Nurse
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Register and login
+- Nurse professional onboarding
+- Submit professional information
+- Enter STR number
+- Select specialization
+- Upload STR document
+- Upload nursing diploma
+- Submit documents for verification
+- View verification status
+- Access nurse dashboard
+- View incoming booking requests
+- Accept booking requests
+- Reject booking requests
+- Start trip to patient's location
+- View patient information
+- View service details
+- View schedule
+- View patient address
+- View patient notes
+- Track booking status
+- View completed bookings
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🔐 Nurse Verification
 
-```bash
-npm run reset-project
-```
+GoNurse includes a dedicated nurse verification flow.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```text
+Professional Information
+          ↓
+Upload Credentials
+          ↓
+STR + Nursing Diploma
+          ↓
+Submit for Verification
+          ↓
+Under Review
+          ↓
+Profile Activated
